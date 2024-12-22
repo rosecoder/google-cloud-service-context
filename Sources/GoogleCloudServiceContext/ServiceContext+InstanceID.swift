@@ -9,17 +9,22 @@ private enum InstanceIDKey: ServiceContextKey {
 extension ServiceContext {
 
     public var instanceID: String? {
-        get {
+        get async {
             if let instanceID = self[InstanceIDKey.self] {
                 return instanceID
             }
             let environment = ProcessInfo.processInfo.environment
-            return 
-                environment["KUBERNETES_POD_NAME"] ?? // Kubernetes
-                environment["INSTANCE_ID"] // Fallback
+            if let instanceID = environment["KUBERNETES_POD_NAME"] ?? environment["INSTANCE_ID"] ?? environment["GCP_INSTANCE"] ?? environment["CLOUD_INSTANCE"] {
+                return instanceID
+            }
+            if let resolver = GoogleServiceContextResolver.shared {
+                return try? await resolver.fetchFromMetadataServer(resource: "instance/id")
+            }
+            return nil
         }
-        set {
-            self[InstanceIDKey.self] = newValue
-        }
+    }
+
+    public mutating func set(instanceID: String?) {
+        self[InstanceIDKey.self] = instanceID
     }
 }

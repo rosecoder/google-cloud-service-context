@@ -5,22 +5,22 @@ import Foundation
 
 @Suite(.serialized) struct ServiceContextInstanceIDTests {
 
-    @Test func shouldUseImplicitIfSet() {
+    @Test func shouldUseImplicitIfSet() async {
         var context = ServiceContext()
-        #expect(context.instanceID == nil)
+        await #expect(context.instanceID == nil)
 
-        context.instanceID = "abc"
-        #expect(context.instanceID == "abc")
+        context.set(instanceID: "abc")
+        await #expect(context.instanceID == "abc")
     }
 
     @Test(arguments: [
         ("KUBERNETES_POD_NAME"),
         ("INSTANCE_ID"),
-    ]) func shouldUseEnvironmentVariableIfSet(environmentName: String) {
+    ]) func shouldUseEnvironmentVariableIfSet(environmentName: String) async {
         let value = "\(environmentName)-\(Int.random(in: 0..<100))"
         setenv(environmentName, value, 1)
         defer { unsetenv(environmentName) }
 
-        #expect(ServiceContext.topLevel.instanceID == value)
+        await #expect(ServiceContext.topLevel.instanceID == value)
     }
 }
